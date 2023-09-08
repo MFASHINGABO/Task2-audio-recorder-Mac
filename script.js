@@ -1,10 +1,13 @@
 document.addEventListener('DOMContentLoaded', function() {
     const startButton = document.getElementById('start');
     const stopButton = document.getElementById('stop');
+    const playButton = document.getElementById('play');
     const audioElement = document.getElementById('audio');
 
     let mediaStream;
     let mediaRecorder;
+
+    let audioChunks = [];
 
     async function startRecording() {
         try {
@@ -25,6 +28,7 @@ document.addEventListener('DOMContentLoaded', function() {
             mediaRecorder.start();
             startButton.disabled = true;
             stopButton.disabled = false;
+            playButton.disabled = true;
         } catch (err) {
             console.error('Error accessing the microphone:', err);
         }
@@ -36,9 +40,15 @@ document.addEventListener('DOMContentLoaded', function() {
             mediaStream.getTracks().forEach(track => track.stop());
             startButton.disabled = false;
             stopButton.disabled = true;
+            playButton.disabled = false;
         }
+    }
+
+    function playRecording() {
+        audioElement.play();
     }
 
     startButton.addEventListener('click', startRecording);
     stopButton.addEventListener('click', stopRecording);
+    playButton.addEventListener('click', playRecording);
 });
