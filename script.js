@@ -3,33 +3,42 @@ document.addEventListener('DOMContentLoaded', function() {
     const stopButton = document.getElementById('stop');
     const audioElement = document.getElementById('audio');
 
+    let mediaStream;
     let mediaRecorder;
-    let audioChunks = [];
 
-    startButton.addEventListener('click', startRecording);
-    stopButton.addEventListener('click', stopRecording);
+    async function startRecording() {
+        try {
+            mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(mediaStream);
 
-    function startRecording() {
-        navigator.mediaDevices.getUserMedia({ audio: true })
-            .then(function(stream) {
-                mediaRecorder = new MediaRecorder(stream);
-                mediaRecorder.ondataavailable = function(e) {
+            mediaRecorder.ondataavailable = function(e) {
+                if (e.data.size > 0) {
                     audioChunks.push(e.data);
-                };
-                mediaRecorder.onstop = function() {
-                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-                    audioElement.src = URL.createObjectURL(audioBlob);
-                };
-                mediaRecorder.start();
-            })
-            .catch(function(err) {
-                console.error('Error accessing the microphone:', err);
-            });
+                }
+            };
+
+            mediaRecorder.onstop = function() {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                audioElement.src = URL.createObjectURL(audioBlob);
+            };
+
+            mediaRecorder.start();
+            startButton.disabled = true;
+            stopButton.disabled = false;
+        } catch (err) {
+            console.error('Error accessing the microphone:', err);
+        }
     }
 
     function stopRecording() {
         if (mediaRecorder && mediaRecorder.state !== 'inactive') {
             mediaRecorder.stop();
+            mediaStream.getTracks().forEach(track => track.stop());
+            startButton.disabled = false;
+            stopButton.disabled = true;
         }
     }
+
+    startButton.addEventListener('click', startRecording);
+    stopButton.addEventListener('click', stopRecording);
 });
